@@ -17,10 +17,14 @@ Including another URLconf
 # django_blog/urls.py
 
 from django.contrib import admin
-from django.urls import path, include  # <-- Add 'include' here
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Map the root URL ('') to look inside the blog app's urls.py
-    path('', include('blog.urls')),  # <-- Add this line
+    
+    # INCLUDE built-in auth URLs (login, logout, password reset)
+    path('', include('django.contrib.auth.urls')), 
+    
+    # BLOG and custom auth URLs are now handled via the blog app
+    path('', include('blog.urls')),
 ]

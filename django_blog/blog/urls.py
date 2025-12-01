@@ -4,6 +4,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Maps the base URL (e.g., /blog/) to the PostListView defined in views.py
+    # Blog Homepage
     path('', views.PostListView.as_view(), name='blog-home'),
+    
+    # Custom Authentication URLs
+    path('register/', views.register, name='register'), # <-- ADD THIS
+    path('profile/', views.profile, name='profile'),   # <-- ADD THIS
 ]
