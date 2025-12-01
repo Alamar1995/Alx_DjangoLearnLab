@@ -124,3 +124,10 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+# django_blog/settings.py (ADDITIONS)
+
+# Default URL to redirect to after a successful login (the profile page)
+LOGIN_REDIRECT_URL = 'profile' 
+
+# Default URL to redirect to if user tries to access a @login_required page
+LOGIN_URL = 'login'
