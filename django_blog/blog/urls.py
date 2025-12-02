@@ -50,3 +50,18 @@ urlpatterns = [
     
     # ... existing register/profile URLs ...
 ]
+# blog/urls.py (UPDATED)
+
+# ... existing imports ...
+
+urlpatterns = [
+    # ... existing Post and Auth URLs ...
+    
+    # SEARCH URL
+    path('search/', views.post_search, name='post-search'), # <-- ADD THIS
+    
+    # TAG URL (Shows posts with a specific tag)
+    path('tags/<slug:tag_slug>/', views.PostListView.as_view(), name='posts-by-tag'), # <-- ADD THIS
+
+    # ... existing register/profile URLs ...
+]

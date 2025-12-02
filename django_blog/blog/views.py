@@ -44,10 +44,8 @@ class PostDetailView(DetailView):
     context_object_name = 'post'
 
 class PostCreateView(LoginRequiredMixin, CreateView):
-    # C - CREATE
-    model = Post
-    template_name = 'blog/post_form.html'
-    fields = ['title', 'content'] # We only ask for these two fields
+    # ...
+    fields = ['title', 'content', 'tags'] # <-- ADD 'tags'
 
     def form_valid(self, form):
         # Automatically set the author to the logged-in user
@@ -55,10 +53,8 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    # U - UPDATE
-    model = Post
-    template_name = 'blog/post_form.html'
-    fields = ['title', 'content']
+    # ...
+    fields = ['title', 'content', 'tags'] # <-- ADD 'tags'
 
     def form_valid(self, form):
         # Automatically set the author to the logged-in user (though it shouldn't change)
@@ -185,4 +181,60 @@ class PostDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         # Add the CommentForm to the context for use in the template
         context['form'] = CommentForm() 
+        return context
+# blog/views.py (ADDITIONS)
+
+from django.db.models import Q # <-- ADD THIS IMPORT
+
+# ... (Keep existing PostListView, DetailView, etc.) ...
+
+def post_search(request):
+    query = request.GET.get('q')
+    results = Post.objects.all()
+    
+    if query:
+        # 1. Filter by Title or Content (Q objects create OR logic)
+        results = results.filter(
+            Q(title__icontains=query) | Q(content__icontains=query)
+        )
+        
+        # 2. Filter by Tags (using taggit's manager method)
+        # Note: We use .union() to combine results from content/title search with tag search
+        tag_results = Post.objects.filter(tags__name__icontains=query)
+        
+        # Combine the results (using set union to avoid duplicates, then converting back)
+        results = (results | tag_results).distinct().order_by('-published_date')
+
+    context = {
+        'posts': results,
+        'query': query,
+        'title': f'Search Results for "{query}"'
+    }
+    return render(request, 'blog/search_results.html', context)
+# blog/views.py (PostListView UPDATED)
+
+class PostListView(ListView):
+    # R - READ (List)
+    model = Post
+    template_name = 'blog/home.html'
+    context_object_name = 'posts'
+    ordering = ['-published_date']
+    paginate_by = 5
+
+    def get_queryset(self):
+        # Check if a tag slug is present in the URL
+        tag_slug = self.kwargs.get('tag_slug')
+        if tag_slug:
+            # Filter posts by the given tag name
+            return Post.objects.filter(tags__slug=tag_slug).order_by('-published_date')
+        
+        # If no tag is provided, return all posts (default behavior)
+        return super().get_queryset()
+    
+    def get_context_data(self, **kwargs):
+        # Optionally add the current tag name to the context for the template title
+        context = super().get_context_data(**kwargs)
+        tag_slug = self.kwargs.get('tag_slug')
+        if tag_slug:
+            context['title'] = f"Posts Tagged: {tag_slug}"
         return context

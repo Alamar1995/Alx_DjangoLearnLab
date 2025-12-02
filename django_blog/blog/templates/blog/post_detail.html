@@ -73,3 +73,19 @@
     </div>
 </body>
 </html>
+<div class="post-tags">
+                Tags: 
+                {% for tag in post.tags.all %}
+                    <a href="{% url 'posts-by-tag' tag.slug %}" class="tag-link">#{{ tag.name }}</a>
+                {% endfor %}
+            </div>
+            
+            ```
+**Save and Exit.**
+
+### C. Update `blog/templates/blog/home.html` (Add Search Bar)
+
+Add a search form to your homepage (or within the header) to send the query.
+
+```bash
+(venv) $ nano blog/templates/blog/home.html

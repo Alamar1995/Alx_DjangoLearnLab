@@ -44,3 +44,20 @@ class Comment(models.Model):
     def get_absolute_url(self):
         # Redirect back to the post detail page after a successful action (edit/delete)
         return reverse('post-detail', kwargs={'pk': self.post.pk})
+# blog/models.py
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+from django.urls import reverse
+from taggit.managers import TaggableManager # <-- ADD THIS IMPORT
+
+# Existing Post Model
+class Post(models.Model):
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    published_date = models.DateTimeField(default=timezone.now)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    tags = TaggableManager() # <-- ADD THIS FIELD
+
+    # ... rest of Post model

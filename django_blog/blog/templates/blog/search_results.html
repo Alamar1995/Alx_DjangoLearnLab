@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Search Results</h1>
+    </header>
+
+    <div class="content-section">
+        {% if query %}
+            <h2>Results for "{{ query }}" ({{ posts.count }} found)</h2>
+        {% endif %}
+
+        {% for post in posts %}
+        <article class="post">
+            <h2><a href="{% url 'post-detail' post.pk %}">{{ post.title }}</a></h2>
+            <p class="post-meta">
+                By {{ post.author.username }} on {{ post.published_date|date:"F d, Y" }}
+            </p>
+            <p>{{ post.content|truncatechars:200 }}</p>
+            <a href="{% url 'post-detail' post.pk %}">Read More &raquo;</a>
+        </article>
+        <hr>
+        {% empty %}
+        <p>No posts match your search query: "{{ query }}".</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
