@@ -3,31 +3,83 @@
 from django.views.generic import ListView
 from .models import Post
 
-# Use Django's built-in ListView to fetch and display multiple objects
-class PostListView(ListView):
-    # Tell the view what model to query
-    model = Post
-    
-    # Specify the template file to use for rendering
-    # The default would be blog/post_list.html, but we name it home.html
-    template_name = 'blog/home.html'
-    
-    # The name of the context variable used in the template (default is object_list)
-    context_object_name = 'posts'
-    
-    # Order the posts by published_date, newest first (the minus sign)
-    ordering = ['-published_date']from django.shortcuts import render
+# Use Django's built-in ListView to fetch and display multiple object
+# blog/views.py
 
-# Create your views here.
-# blog/views.py (ADDITIONS)
-
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin # <-- NEW IMPORTS
+from django.views.generic import ( # <-- UPDATED IMPORTS
+    ListView,
+    DetailView,
+    CreateView,
+    UpdateView,
+    DeleteView
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.forms import UserChangeForm # Still needed for profile view
 from .forms import UserRegisterForm
-from django.contrib.auth.forms import UserChangeForm # We'll use this for now
+from .models import Post, User 
 
-# ... (Keep the existing PostListView definition) ...
+# --- Authentication Views (Keep these as they were) ---
+# ... register(request) function ...
+# ... profile(request) function ...
+# ------------------------------------------------------
+
+
+# --- Blog Post Views (CRUD) ---
+
+class PostListView(ListView):
+    # R - READ (List)
+    model = Post
+    template_name = 'blog/home.html'  # Use the existing home template
+    context_object_name = 'posts'
+    ordering = ['-published_date']
+    paginate_by = 5 # Optional: Add pagination
+
+class PostDetailView(DetailView):
+    # R - READ (Detail)
+    model = Post
+    template_name = 'blog/post_detail.html'
+    context_object_name = 'post'
+
+class PostCreateView(LoginRequiredMixin, CreateView):
+    # C - CREATE
+    model = Post
+    template_name = 'blog/post_form.html'
+    fields = ['title', 'content'] # We only ask for these two fields
+
+    def form_valid(self, form):
+        # Automatically set the author to the logged-in user
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    # U - UPDATE
+    model = Post
+    template_name = 'blog/post_form.html'
+    fields = ['title', 'content']
+
+    def form_valid(self, form):
+        # Automatically set the author to the logged-in user (though it shouldn't change)
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def test_func(self):
+        # REQUIRED BY UserPassesTestMixin: Ensures only the author can update
+        post = self.get_object()
+        return self.request.user == post.author
+
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    # D - DELETE
+    model = Post
+    template_name = 'blog/post_confirm_delete.html'
+    success_url = '/' # Redirect to the homepage after successful deletion
+
+    def test_func(self):
+        # REQUIRED BY UserPassesTestMixin: Ensures only the author can delete
+        post = self.get_object()
+        return self.request.user == post.author
 
 def register(request):
     if request.method == 'POST':
