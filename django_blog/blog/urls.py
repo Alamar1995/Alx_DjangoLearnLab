@@ -31,3 +31,22 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),
 ]
+# blog/urls.py (UPDATED with Comment URLs)
+
+# ... existing imports ...
+
+urlpatterns = [
+    # ... existing Post and Auth URLs ...
+
+    # Comment URLs
+    # C - CREATE Comment (Uses function-based view for simplicity)
+    path('post/<int:pk>/comment/new/', views.add_comment_to_post, name='add-comment'),
+    
+    # U - UPDATE Comment (Note: uses <int:pk> for the Comment ID, not the Post ID)
+    path('comment/<int:pk>/update/', views.CommentUpdateView.as_view(), name='comment-update'),
+    
+    # D - DELETE Comment
+    path('comment/<int:pk>/delete/', views.CommentDeleteView.as_view(), name='comment-delete'),
+    
+    # ... existing register/profile URLs ...
+]

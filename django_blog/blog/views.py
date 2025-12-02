@@ -111,3 +111,78 @@ def profile(request):
     form.fields.pop('password') 
     
     return render(request, 'blog/profile.html', {'form': form, 'title': 'Profile'})
+# blog/views.py (ADDITIONS)
+
+from .forms import UserRegisterForm, CommentForm # <-- UPDATED IMPORT
+from .models import Post, User, Comment         # <-- UPDATED IMPORT
+
+# ... (Keep existing Post, register, and profile views) ...
+
+# ------------------------------------------------------------------
+# Comment Views (CRUD)
+# ------------------------------------------------------------------
+
+@login_required
+def add_comment_to_post(request, pk):
+    """Handles adding a new comment directly from the post detail page."""
+    post = get_object_or_404(Post, pk=pk)
+    
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            messages.success(request, 'Your comment was posted successfully!')
+            return redirect('post-detail', pk=post.pk)
+    else:
+        # If accessing via GET, the form will be displayed on the detail page
+        return redirect('post-detail', pk=post.pk)
+
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    # U - UPDATE Comment
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_form.html'
+    
+    # We don't need to specify success_url here because the model's get_absolute_url
+    # method will redirect to the post detail page automatically.
+    
+    def test_func(self):
+        # Only the author can update the comment
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    # D - DELETE Comment
+    model = Comment
+    template_name = 'blog/comment_confirm_delete.html'
+    
+    def get_success_url(self):
+        # Redirect to the post detail page after deletion
+        return reverse('post-detail', kwargs={'pk': self.object.post.pk})
+
+    def test_func(self):
+        # Only the author can delete the comment
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+# Ensure you keep your existing PostListView, DetailView, etc. below this
+# blog/views.py (UPDATED)
+
+# ... (Keep all imports) ...
+
+class PostDetailView(DetailView):
+    # R - READ (Detail)
+    model = Post
+    template_name = 'blog/post_detail.html'
+    context_object_name = 'post'
+
+    def get_context_data(self, **kwargs): # <-- ADD THIS METHOD
+        context = super().get_context_data(**kwargs)
+        # Add the CommentForm to the context for use in the template
+        context['form'] = CommentForm() 
+        return context

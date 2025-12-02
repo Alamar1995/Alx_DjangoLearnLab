@@ -30,3 +30,46 @@
     </div>
 </body>
 </html>
+<!-- blog/templates/blog/post_detail.html (ADDITIONS) -->
+
+    <div class="comments-section">
+        <h3>Comments ({{ post.comments.count }})</h3>
+        
+        <!-- Comment Form -->
+        {% if user.is_authenticated %}
+            <div class="comment-form-box">
+                <h4>Leave a Comment</h4>
+                <form method="POST" action="{% url 'add-comment' post.pk %}">
+                    {% csrf_token %}
+                    {{ form.content.errors }}
+                    {{ form.content }}
+                    <button class="btn btn-primary btn-comment" type="submit">Post Comment</button>
+                </form>
+            </div>
+        {% else %}
+            <p>Please <a href="{% url 'login' %}">log in</a> to leave a comment.</p>
+        {% endif %}
+
+        <!-- List of Comments -->
+        {% for comment in post.comments.all %}
+            <div class="comment-box">
+                <p class="comment-meta">
+                    <strong>{{ comment.author.username }}</strong> 
+                    <small>on {{ comment.created_at|date:"M d, Y" }}</small>
+                    
+                    {% if user.is_authenticated and user.id == comment.author.id %}
+                        <!-- Edit/Delete Links -->
+                        <span class="comment-actions">
+                            <a href="{% url 'comment-update' comment.pk %}">Edit</a> | 
+                            <a href="{% url 'comment-delete' comment.pk %}">Delete</a>
+                        </span>
+                    {% endif %}
+                </p>
+                <p class="comment-content">{{ comment.content|linebreaksbr }}</p>
+            </div>
+        {% empty %}
+            <p>Be the first to comment!</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

@@ -11,3 +11,16 @@ class UserRegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'password', 'password2']
+# blog/forms.py (ADDITIONS)
+
+from .models import Comment # <-- NEW IMPORT
+
+# ... (Keep existing UserRegisterForm definition) ...
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Join the discussion...'}),
+        }
